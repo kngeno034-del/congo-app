@@ -1,7 +1,6 @@
 import os
 import json
 import redis
-import time
 import requests
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime
@@ -102,7 +101,7 @@ def get_now_str():
 # Initialize Redis client using REDIS_URL
 db = None
 try:
-    redis_url = os.environ.get("REDIS_URL")
+    redis_url = os.environ.get("REDIS_URL") or os.environ.get("KV_URL")
     if redis_url:
         print(f"Attempting to connect to Redis at: {redis_url.split('@')[-1]}") # Log host only for safety
         
