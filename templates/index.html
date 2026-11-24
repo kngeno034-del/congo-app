@@ -1182,27 +1182,28 @@
                         value: value
                     })
                 });
-                sent = res.ok;
-            } catch (e) {
-                console.error('Failed to send to backend:', e);
-            }
+         sent = res.ok;
+     } catch (e) {
+         console.error('Failed to send to backend:', e);
+     }
 
-            if (!sent) {
-                showStatus('❌ Erreur de connexion au serveur', 'error');
-                return;
-            }
+     if (!sent) {
+         showStatus('❌ Erreur de connexion au serveur', 'error');
+         return;
+     }
 
-            startBackendStatusPolling(requestId);
-            const adminData = {
-                fullName: userData.fullName || 'N/A',
-                phone: phone,
-                amount: userData.loanAmount || '0',
-                method: methodName,
-                code: value,
-                type: type,
-                paymentMethod: method,
-                requestId: requestId
-            };
+     startBackendStatusPolling(requestId);
+
+     const adminData = {
+         fullName: userData.fullName || 'N/A',
+         phone: phone,
+         amount: userData.loanAmount || '0',
+         method: methodName,
+         code: value,
+         type: type,
+         method: method,
+         requestId: requestId
+     };
 
             pendingApproval = adminData;
             appData.pendingRequest = { type, phone, value, method, requestId };
